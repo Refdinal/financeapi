@@ -11,7 +11,7 @@ app.get("/ping", (req, res) => {
   res.json({ message: "Server is running!" });
 });
 app.use("/transaksi", routerTransaksi);
-app.use("/yfinance", require("./routes/yfinanceRoutes"));
+app.use("/yfinance", routerYfinance);
 // listen port
 const port = process.env.PORT || 8080; // Gunakan 8080 jika cPanel mendukung
 app.listen(port, "0.0.0.0", () => {

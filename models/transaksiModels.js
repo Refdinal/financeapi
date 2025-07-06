@@ -54,20 +54,27 @@ const getTotalSaldo = async () => {
 };
 const getLiquid = async () => {
   const result = await pool.query(`
-    SELECT SUM(saldo) AS total_saldo
-    FROM (
-      -- Tambah jika pemasukan
-      SELECT jumlah AS saldo
-      FROM transaksi
-      WHERE tipe = 'pemasukan'
+WITH pergerakan AS (
+  SELECT tujuan AS akun, jumlah AS saldo
+  FROM transaksi
+  WHERE tipe = 'pemasukan'
 
-      UNION ALL
+  UNION ALL
 
-      -- Kurang jika pengeluaran
-      SELECT -jumlah AS saldo
-      FROM transaksi
-      WHERE tipe = 'pengeluaran'
-  ) AS mutasi;
+  SELECT asal AS akun, -jumlah AS saldo
+  FROM transaksi
+  WHERE tipe = 'pengeluaran'
+),
+total_saldo_per_akun AS (
+  SELECT akun, SUM(saldo) AS total_saldo
+  FROM pergerakan
+  GROUP BY akun
+)
+SELECT
+  SUM(total_saldo) AS total_saldo
+FROM total_saldo_per_akun
+WHERE akun != 'BCA';
+
 
     `);
   return result.rows;
