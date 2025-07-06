@@ -4,7 +4,12 @@ const cors = require("cors");
 require("dotenv").config();
 const routerTransaksi = require("./routes/transaksiRoutes");
 const routerYfinance = require("./routes/yfinanceRoutes");
-app.use(cors());
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN,
+};
+
+// Gunakan cors dengan origin spesifik
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get("/ping", (req, res) => {
