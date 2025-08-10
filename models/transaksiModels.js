@@ -107,7 +107,7 @@ const getAkunInvestasi = async () => {
       ) AS total_investasi
     FROM transaksi,
     LATERAL (
-      VALUES ('pluang'), ('ipot')
+      VALUES ('indodax'),('pluang'),('pegadaian'),('ipot')
     ) AS akun_list(akun)
     WHERE
       (kategori = 'investasi' AND tujuan = akun_list.akun)
