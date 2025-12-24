@@ -9,7 +9,7 @@ const corsOptions = {
 };
 
 // Gunakan cors dengan origin spesifik
-app.use();
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get("/ping", (req, res) => {
