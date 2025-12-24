@@ -1,5 +1,7 @@
 const { Pool } = require("pg");
+const dns = require("dns");
 
+dns.setDefaultResultOrder("ipv4first"); // <--- FIX VERCEL DNS BUG
 const pool = new Pool({
   user: process.env.PGUSER,
   password: process.env.PGPASSWORD,
