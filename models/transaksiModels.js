@@ -97,23 +97,26 @@ const getInvestasi = async () => {
 const getAkunInvestasi = async () => {
   const result = await pool.query(`
     SELECT
-      akun,
-      SUM(
-        CASE
-          WHEN kategori = 'investasi' AND tujuan = akun THEN jumlah
-          WHEN kategori = 'pencairan' AND asal = akun THEN -jumlah
-          ELSE 0
-        END
-      ) AS total_investasi
-    FROM transaksi,
-    LATERAL (
-      VALUES ('trading'),('bitcoin'),('saham'),('reksadana')
-    ) AS akun_list(akun)
-    WHERE
-      (kategori = 'investasi' AND tujuan = akun_list.akun)
-      OR
-      (kategori = 'pencairan' AND asal = akun_list.akun)
-    GROUP BY akun;
+        akun,
+        SUM(
+            CASE
+                WHEN kategori = 'investasi' AND tujuan = akun THEN jumlah
+                WHEN kategori = 'pencairan' AND asal = akun THEN -jumlah
+                ELSE 0
+            END
+        ) AS total_investasi
+    FROM (
+        SELECT tujuan AS akun FROM transaksi WHERE kategori = 'investasi'
+        UNION
+        SELECT asal   AS akun FROM transaksi WHERE kategori = 'pencairan'
+    ) akun_list
+    JOIN transaksi ON (
+          (transaksi.kategori = 'investasi' AND transaksi.tujuan = akun_list.akun)
+        OR (transaksi.kategori = 'pencairan' AND transaksi.asal   = akun_list.akun)
+    )
+    GROUP BY akun
+    ORDER BY akun;
+
     `);
   return result.rows;
 };
