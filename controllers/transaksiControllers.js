@@ -10,13 +10,10 @@ const getAllTransaksi = async (req, res) => {
   try {
     const limit = req.params.limit;
     const transaksi = await transaksiModels.getAllTransaksi(limit);
-    const fixed = transaksi.map((t) => ({
-      ...t,
-      tanggal: dayjs(t.tanggal).tz("Asia/Jakarta").format(),
-    }));
+
     return res.status(200).json({
       status: "success",
-      transaksi: fixed,
+      transaksi: transaksi,
     });
   } catch (error) {
     return res.status(400).json({
