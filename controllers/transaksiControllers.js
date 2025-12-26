@@ -1,12 +1,22 @@
 const transaksiModels = require("../models/transaksiModels");
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+const tz = require("dayjs/plugin/timezone");
+
+dayjs.extend(utc);
+dayjs.extend(tz);
 
 const getAllTransaksi = async (req, res) => {
   try {
     const limit = req.params.limit;
     const transaksi = await transaksiModels.getAllTransaksi(limit);
+    const fixed = transaksi.map((t) => ({
+      ...t,
+      tanggal: dayjs(t.tanggal).tz("Asia/Jakarta").format(),
+    }));
     return res.status(200).json({
       status: "success",
-      transaksi: transaksi,
+      transaksi: fixed,
     });
   } catch (error) {
     return res.status(400).json({
