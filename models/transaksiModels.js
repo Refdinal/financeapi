@@ -124,6 +124,7 @@ const getBelanjaBulanan = async () => {
   FROM transaksi
   WHERE tipe = 'pengeluaran'
     AND tujuan = 'belanja'
+    AND tanggal >= DATE_TRUNC('month', NOW()) - INTERVAL '11 months'
   GROUP BY DATE_TRUNC('month', tanggal)
 ),
 t_amal AS (
@@ -133,6 +134,7 @@ t_amal AS (
   FROM transaksi
   WHERE tipe = 'pengeluaran'
     AND tujuan = 'amal'
+    AND tanggal >= DATE_TRUNC('month', NOW()) - INTERVAL '11 months'
   GROUP BY DATE_TRUNC('month', tanggal)
 )
 
@@ -143,9 +145,8 @@ SELECT
 FROM t_belanja
 LEFT JOIN t_amal
   ON t_belanja.bulan = t_amal.bulan
-ORDER BY t_belanja.bulan DESC;
-
-
+ORDER BY t_belanja.bulan DESC
+LIMIT 12;
     `);
   return result.rows;
 };
