@@ -35,18 +35,20 @@ const deleteTransaksiById = async (id) => {
 
 const getTotalSaldo = async () => {
   const result = await pool.query(`
-    SELECT akun, SUM(saldo) AS total_saldo
-    FROM (
-      SELECT tujuan AS akun, jumlah AS saldo
-      FROM transaksi
-      WHERE tipe = 'pemasukan'
-
-      UNION ALL
-
-      SELECT asal AS akun, -jumlah AS saldo
-      FROM transaksi
-      WHERE tipe = 'pengeluaran'
-    ) AS pergerakan
+    SELECT
+      CASE
+        WHEN tipe = 'pemasukan' THEN tujuan
+        WHEN tipe = 'pengeluaran' THEN asal
+      END AS akun,
+      SUM(
+        CASE
+          WHEN tipe = 'pemasukan' THEN jumlah
+          WHEN tipe = 'pengeluaran' THEN -jumlah
+          ELSE 0
+        END
+      ) AS total_saldo
+    FROM transaksi
+    WHERE tipe IN ('pemasukan', 'pengeluaran')
     GROUP BY akun
     ORDER BY akun;
     `);
@@ -54,28 +56,20 @@ const getTotalSaldo = async () => {
 };
 const getLiquid = async () => {
   const result = await pool.query(`
-WITH pergerakan AS (
-  SELECT tujuan AS akun, jumlah AS saldo
-  FROM transaksi
-  WHERE tipe = 'pemasukan'
-
-  UNION ALL
-
-  SELECT asal AS akun, -jumlah AS saldo
-  FROM transaksi
-  WHERE tipe = 'pengeluaran'
-),
-total_saldo_per_akun AS (
-  SELECT akun, SUM(saldo) AS total_saldo
-  FROM pergerakan
-  GROUP BY akun
-)
-SELECT
-  SUM(total_saldo) AS total_saldo
-FROM total_saldo_per_akun
-WHERE akun != 'BCA';
-
-
+    SELECT
+      SUM(
+        CASE
+          WHEN tipe = 'pemasukan' THEN jumlah
+          WHEN tipe = 'pengeluaran' THEN -jumlah
+          ELSE 0
+        END
+      ) AS total_saldo
+    FROM transaksi
+    WHERE tipe IN ('pemasukan', 'pengeluaran')
+      AND (
+        (tipe = 'pemasukan' AND tujuan != 'BCA')
+        OR (tipe = 'pengeluaran' AND asal != 'BCA')
+      );
     `);
   return result.rows;
 };
@@ -97,26 +91,21 @@ const getInvestasi = async () => {
 const getAkunInvestasi = async () => {
   const result = await pool.query(`
     SELECT
-        akun,
-        SUM(
-            CASE
-                WHEN kategori = 'investasi' AND tujuan = akun THEN jumlah
-                WHEN kategori = 'pencairan' AND asal = akun THEN -jumlah
-                ELSE 0
-            END
-        ) AS total_investasi
-    FROM (
-        SELECT tujuan AS akun FROM transaksi WHERE kategori = 'investasi'
-        UNION
-        SELECT asal   AS akun FROM transaksi WHERE kategori = 'pencairan'
-    ) akun_list
-    JOIN transaksi ON (
-          (transaksi.kategori = 'investasi' AND transaksi.tujuan = akun_list.akun)
-        OR (transaksi.kategori = 'pencairan' AND transaksi.asal   = akun_list.akun)
-    )
+      CASE
+        WHEN kategori = 'investasi' THEN tujuan
+        WHEN kategori = 'pencairan' THEN asal
+      END AS akun,
+      SUM(
+        CASE
+          WHEN kategori = 'investasi' THEN jumlah
+          WHEN kategori = 'pencairan' THEN -jumlah
+          ELSE 0
+        END
+      ) AS total_investasi
+    FROM transaksi
+    WHERE kategori IN ('investasi', 'pencairan')
     GROUP BY akun
     ORDER BY akun;
-
     `);
   return result.rows;
 };
