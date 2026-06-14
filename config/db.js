@@ -14,9 +14,11 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 
   // Serverless-friendly pool config
-  max: 3,                        // kurangi max connection (serverless banyak instance)
-  idleTimeoutMillis: 10000,      // tutup koneksi idle lebih cepat (10s)
-  connectionTimeoutMillis: 10000, // timeout koneksi lebih panjang (10s)
+  max: 3,                          // kurangi max connection (serverless banyak instance)
+  idleTimeoutMillis: 10000,        // tutup koneksi idle lebih cepat (10s)
+  connectionTimeoutMillis: 10000,  // timeout koneksi lebih panjang (10s)
+  keepAlive: true,                 // jaga koneksi TCP tetap hidup
+  keepAliveInitialDelayMillis: 0,  // langsung aktifkan keepAlive
 });
 
 // Prevent unhandled error saat koneksi idle terputus
