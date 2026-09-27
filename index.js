@@ -3,9 +3,21 @@ const app = express();
 const cors = require("cors");
 require("dotenv").config();
 const routerTransaksi = require("./routes/transaksiRoutes");
+const routerAlokasi = require("./routes/alokasiRoutes");
 const routerYfinance = require("./routes/yfinanceRoutes");
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Not allowed by CORS: ${origin}`));
+    }
+  },
 };
 
 // Gunakan cors dengan origin spesifik
@@ -16,6 +28,7 @@ app.get("/ping", (req, res) => {
   res.json({ message: "Server is running!" });
 });
 app.use("/transaksi", routerTransaksi);
+app.use("/alokasi", routerAlokasi);
 app.use("/yfinance", routerYfinance);
 // listen port
 const port = process.env.PORT || 8080; // Gunakan 8080 jika cPanel mendukung

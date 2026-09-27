@@ -1,7 +1,11 @@
-const { Pool } = require("pg");
+const { Pool, types } = require("pg");
 const dns = require("dns");
 
 dns.setDefaultResultOrder("ipv4first"); // <--- FIX VERCEL DNS BUG
+
+// Kembalikan TIMESTAMP tanpa zona sebagai string apa adanya (jangan dikonversi ke
+// Date/UTC) agar waktu yang disimpan tidak bergeser saat dibaca/diedit.
+types.setTypeParser(1114, (v) => v); // timestamp without time zone
 
 const pool = new Pool({
   user: process.env.PGUSER,
