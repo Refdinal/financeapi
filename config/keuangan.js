@@ -3,7 +3,7 @@
 const AKUN = {
   liquid: ["bri", "nagari", "ovo", "cash"],
   darurat: ["bca"],
-  investasi: ["bitcoin", "saham"],
+  investasi: ["bitcoin", "saham", "reksadana"],
 };
 
 const SEMUA_AKUN = [...AKUN.liquid, ...AKUN.darurat, ...AKUN.investasi];
