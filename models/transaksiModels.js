@@ -452,6 +452,67 @@ const getBelanjaBulanan = async () => {
   return out;
 };
 
+// Pengeluaran harian dalam bulan pengeluaran terakhir, dari tanggal 1 sampai akhir bulan.
+const getBelanjaHarian = async () => {
+  const anchorRes = await pool.query(
+    "SELECT MAX(tanggal) AS max_tanggal FROM transaksi WHERE tipe = 'pengeluaran' AND arah = 'keluar'",
+  );
+  const maxTanggal = anchorRes.rows[0].max_tanggal;
+  const result = await pool.query(
+    `SELECT
+       DATE_TRUNC('day', tanggal) AS tanggal,
+       COALESCE(SUM(jumlah) FILTER (WHERE kategori = 'belanja' AND tujuan = 'sandang'), 0) AS sandang,
+       COALESCE(SUM(jumlah) FILTER (WHERE kategori = 'belanja' AND tujuan = 'pangan'), 0) AS pangan,
+       COALESCE(SUM(jumlah) FILTER (WHERE kategori = 'belanja' AND tujuan = 'papan'), 0) AS papan,
+       COALESCE(SUM(jumlah) FILTER (WHERE kategori = 'belanja' AND tujuan = 'sekunder'), 0) AS sekunder,
+       COALESCE(SUM(jumlah) FILTER (WHERE kategori = 'belanja' AND tujuan = 'tersier'), 0) AS tersier,
+       COALESCE(SUM(jumlah) FILTER (WHERE kategori = 'amal'), 0) AS amal
+     FROM transaksi
+     WHERE tipe = 'pengeluaran' AND arah = 'keluar'
+       AND tanggal >= DATE_TRUNC('month', $1::timestamp)
+       AND tanggal < DATE_TRUNC('month', $1::timestamp) + INTERVAL '1 month'
+     GROUP BY DATE_TRUNC('day', tanggal)
+     ORDER BY 1;`,
+    [maxTanggal],
+  );
+
+  const map = {};
+  result.rows.forEach((r) => {
+    const d = new Date(r.tanggal);
+    map[d.getDate()] = r;
+  });
+
+  const now = maxTanggal ? new Date(maxTanggal) : new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const jumlahHari = new Date(year, month + 1, 0).getDate();
+  const out = [];
+  for (let day = 1; day <= jumlahHari; day += 1) {
+    const r = map[day];
+    const n = (k) => (r ? Number(r[k]) : 0);
+    const sandang = n("sandang");
+    const pangan = n("pangan");
+    const papan = n("papan");
+    const sekunder = n("sekunder");
+    const tersier = n("tersier");
+    const amal = n("amal");
+    const pokok = sandang + pangan + papan;
+    out.push({
+      label: String(day),
+      tanggal: `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+      sandang,
+      pangan,
+      papan,
+      pokok,
+      sekunder,
+      tersier,
+      amal,
+      total: pokok + sekunder + tersier + amal,
+    });
+  }
+  return out;
+};
+
 // Transaksi pengeluaran yang masuk ke grafik (belanja + amal) pada 12 bulan terakhir.
 const getBelanjaTransaksi = async (limit = 200) => {
   const anchorRes = await pool.query(
@@ -475,6 +536,7 @@ const getDashboard = async () => {
   const alokasi = await getAlokasi();
   const investasi = await getInvestasi(saldo);
   const belanja_bulanan = await getBelanjaBulanan();
+  const belanja_harian = await getBelanjaHarian();
   const belanja_transaksi = await getBelanjaTransaksi();
 
   const jumlahAkun = (keys) =>
@@ -489,6 +551,7 @@ const getDashboard = async () => {
     alokasi,
     investasi,
     belanja_bulanan,
+    belanja_harian,
     belanja_transaksi,
     akun: AKUN,
     ringkasan: {
