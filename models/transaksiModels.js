@@ -14,10 +14,12 @@ const {
 
 const LIQUID = AKUN.liquid;
 const DARURAT = AKUN.darurat;
+const WISHLIST = AKUN.wishlist;
 const INVESTASI = AKUN.investasi;
-const LIQUID_DARURAT = [...LIQUID, ...DARURAT];
-// Pengeluaran boleh dari akun liquid atau bca (dana ketengan), tanpa mengubah pos alokasi.
-const ASAL_PENGELUARAN = [...LIQUID, DARURAT[0]];
+const AKUN_TERSEDIA = [...LIQUID, ...DARURAT, ...WISHLIST];
+const AKUN_DANA = AKUN_TERSEDIA;
+// Pengeluaran dari akun wishlist tidak mengubah pos alokasi.
+const ASAL_PENGELUARAN = AKUN_TERSEDIA;
 const POS_KEYS = ALOKASI.map((a) => a.key);
 
 // --- Helper: bagi jumlah ke pos alokasi, presisi 2 desimal, total pas (tanpa sisa) ---
@@ -54,32 +56,32 @@ const validateTransaksi = (p) => {
       if (!JENIS_PENDAPATAN.includes(p.asal)) throw new Error("Jenis pendapatan tidak valid");
       if (p.asal === "utama" && p.tujuan !== TUJUAN_PENDAPATAN_UTAMA)
         throw new Error("Pendapatan utama hanya masuk ke nagari");
-      if (p.asal === "sampingan" && !LIQUID_DARURAT.includes(p.tujuan))
+      if (p.asal === "sampingan" && !AKUN_DANA.includes(p.tujuan))
         throw new Error("Tujuan pendapatan sampingan tidak valid");
       break;
     case "pengeluaran":
       if (!KATEGORI.map((k) => k.key).includes(p.kategori)) throw new Error("Kategori tidak valid");
-      if (!ASAL_PENGELUARAN.includes(p.asal)) throw new Error("Asal pengeluaran harus akun liquid atau bca");
+       if (!ASAL_PENGELUARAN.includes(p.asal)) throw new Error("Asal pengeluaran tidak valid");
       if (p.kategori === "belanja" && !TUJUAN_BELANJA.includes(p.tujuan))
         throw new Error("Tujuan belanja tidak valid");
       if (p.kategori === "amal") {
         if (!TUJUAN_AMAL.includes(p.tujuan)) throw new Error("Tujuan amal tidak valid");
-        if (p.asal !== DARURAT[0] && !SUMBER_AMAL.includes(p.alokasi))
+         if (!WISHLIST.includes(p.asal) && !SUMBER_AMAL.includes(p.alokasi))
           throw new Error("Sumber pos amal tidak valid");
       }
       break;
     case "pemindahan":
-      if (!LIQUID_DARURAT.includes(p.asal) || !LIQUID_DARURAT.includes(p.tujuan))
+      if (!AKUN_DANA.includes(p.asal) || !AKUN_DANA.includes(p.tujuan))
         throw new Error("Akun pemindahan tidak valid");
       if (p.asal === p.tujuan) throw new Error("Asal dan tujuan tidak boleh sama");
       break;
     case "masuk_investasi":
-      if (!LIQUID_DARURAT.includes(p.asal)) throw new Error("Asal masuk investasi tidak valid");
+      if (!AKUN_DANA.includes(p.asal)) throw new Error("Asal masuk investasi tidak valid");
       if (!INVESTASI.includes(p.tujuan)) throw new Error("Tujuan masuk investasi tidak valid");
       break;
     case "tarik_investasi":
       if (!INVESTASI.includes(p.asal)) throw new Error("Asal tarik investasi tidak valid");
-      if (p.tujuan !== DARURAT[0]) throw new Error("Tujuan tarik investasi harus bca");
+       if (!DARURAT.includes(p.tujuan)) throw new Error("Tujuan tarik investasi harus akun dana darurat");
       break;
     default:
       throw new Error("Tipe transaksi tidak valid");
@@ -168,8 +170,8 @@ const createTransaksi = async (p) => {
     } else if (p.tipe === "pengeluaran") {
       const t = await insTrx({ arah: "keluar", kategori: p.kategori, asal: p.asal, tujuan: p.tujuan });
       created.push(t.rows[0]);
-      // Pengeluaran dari bca tidak mengubah pos alokasi.
-      if (ubahAlokasi && p.asal !== DARURAT[0]) {
+      // Pengeluaran dari akun wishlist tidak mengubah pos alokasi.
+      if (ubahAlokasi && !WISHLIST.includes(p.asal)) {
         const pos = p.kategori === "belanja" ? "pribadi" : p.alokasi;
         await cekSaldoPos(client, pos, jumlah);
         await insAlokasi(t.rows[0].id, "keluar", pos, jumlah);
@@ -179,8 +181,8 @@ const createTransaksi = async (p) => {
       const keluar = await insTrx({ grup_id: grup, arah: "keluar", asal: p.asal, tujuan: p.tujuan });
       const masuk = await insTrx({ grup_id: grup, arah: "masuk", asal: p.asal, tujuan: p.tujuan });
       created.push(keluar.rows[0], masuk.rows[0]);
-      // Realisasi dana ketengan: pos dana_darurat berkurang saat masuk ke bca.
-      if (ubahAlokasi && p.tujuan === DARURAT[0]) {
+      // Realisasi dana darurat: pos dana_darurat berkurang saat masuk ke akun darurat.
+      if (ubahAlokasi && DARURAT.includes(p.tujuan)) {
         await cekSaldoPos(client, "dana_darurat", jumlah);
         await insAlokasi(keluar.rows[0].id, "keluar", "dana_darurat", jumlah);
       }

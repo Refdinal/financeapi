@@ -1,12 +1,13 @@
 // Konfigurasi domain keuangan (hardcoded, mudah diubah).
 
 const AKUN = {
-  liquid: ["bri", "nagari", "ovo", "cash"],
-  darurat: ["bca"],
+  liquid: ["nagari", "ovo", "cash"],
+  darurat: ["bri"],
+  wishlist: ["bca"],
   investasi: ["bitcoin", "saham", "reksadana"],
 };
 
-const SEMUA_AKUN = [...AKUN.liquid, ...AKUN.darurat, ...AKUN.investasi];
+const SEMUA_AKUN = [...AKUN.liquid, ...AKUN.darurat, ...AKUN.wishlist, ...AKUN.investasi];
 
 // Pos alokasi + persen. Total persen = 100.
 const ALOKASI = [
@@ -14,7 +15,7 @@ const ALOKASI = [
   { key: "istri", label: "Istri", persen: 20 },
   { key: "pribadi", label: "Pribadi", persen: 20 },
   { key: "investasi", label: "Investasi", persen: 10 },
-  { key: "dana_darurat", label: "Dana Ketengan", persen: 5 },
+  { key: "dana_darurat", label: "Dana Darurat", persen: 5 },
   { key: "amal", label: "Amal", persen: 5 },
 ];
 
