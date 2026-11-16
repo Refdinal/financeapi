@@ -16,7 +16,7 @@ const LIQUID = AKUN.liquid;
 const DARURAT = AKUN.darurat;
 const INVESTASI = AKUN.investasi;
 const LIQUID_DARURAT = [...LIQUID, ...DARURAT];
-// Pengeluaran boleh dari akun liquid atau bca (dana darurat), tanpa mengubah pos alokasi.
+// Pengeluaran boleh dari akun liquid atau bca (dana ketengan), tanpa mengubah pos alokasi.
 const ASAL_PENGELUARAN = [...LIQUID, DARURAT[0]];
 const POS_KEYS = ALOKASI.map((a) => a.key);
 
@@ -179,7 +179,7 @@ const createTransaksi = async (p) => {
       const keluar = await insTrx({ grup_id: grup, arah: "keluar", asal: p.asal, tujuan: p.tujuan });
       const masuk = await insTrx({ grup_id: grup, arah: "masuk", asal: p.asal, tujuan: p.tujuan });
       created.push(keluar.rows[0], masuk.rows[0]);
-      // Realisasi dana darurat: pos dana_darurat berkurang saat masuk ke bca.
+      // Realisasi dana ketengan: pos dana_darurat berkurang saat masuk ke bca.
       if (ubahAlokasi && p.tujuan === DARURAT[0]) {
         await cekSaldoPos(client, "dana_darurat", jumlah);
         await insAlokasi(keluar.rows[0].id, "keluar", "dana_darurat", jumlah);
