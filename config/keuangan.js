@@ -15,7 +15,7 @@ const ALOKASI = [
   { key: "istri", label: "Istri", persen: 20 },
   { key: "pribadi", label: "Pribadi", persen: 20 },
   { key: "investasi", label: "Investasi", persen: 10 },
-  { key: "dana_darurat", label: "Dana Darurat", persen: 5 },
+  { key: "dana_darurat", label: "Dana Ketenangan", persen: 5 },
   { key: "amal", label: "Amal", persen: 5 },
 ];
 
