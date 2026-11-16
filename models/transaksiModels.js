@@ -15,6 +15,7 @@ const {
 const LIQUID = AKUN.liquid;
 const DARURAT = AKUN.darurat;
 const WISHLIST = AKUN.wishlist;
+const AKUN_PENGELUARAN_TANPA_ALOKASI = [...DARURAT, ...WISHLIST];
 const INVESTASI = AKUN.investasi;
 const AKUN_TERSEDIA = [...LIQUID, ...DARURAT, ...WISHLIST];
 const AKUN_DANA = AKUN_TERSEDIA;
@@ -66,7 +67,7 @@ const validateTransaksi = (p) => {
         throw new Error("Tujuan belanja tidak valid");
       if (p.kategori === "amal") {
         if (!TUJUAN_AMAL.includes(p.tujuan)) throw new Error("Tujuan amal tidak valid");
-         if (!WISHLIST.includes(p.asal) && !SUMBER_AMAL.includes(p.alokasi))
+         if (!AKUN_PENGELUARAN_TANPA_ALOKASI.includes(p.asal) && !SUMBER_AMAL.includes(p.alokasi))
           throw new Error("Sumber pos amal tidak valid");
       }
       break;
@@ -170,8 +171,8 @@ const createTransaksi = async (p) => {
     } else if (p.tipe === "pengeluaran") {
       const t = await insTrx({ arah: "keluar", kategori: p.kategori, asal: p.asal, tujuan: p.tujuan });
       created.push(t.rows[0]);
-      // Pengeluaran dari akun wishlist tidak mengubah pos alokasi.
-      if (ubahAlokasi && !WISHLIST.includes(p.asal)) {
+      // Pengeluaran dari akun dana terpisah tidak mengubah pos alokasi.
+      if (ubahAlokasi && !AKUN_PENGELUARAN_TANPA_ALOKASI.includes(p.asal)) {
         const pos = p.kategori === "belanja" ? "pribadi" : p.alokasi;
         await cekSaldoPos(client, pos, jumlah);
         await insAlokasi(t.rows[0].id, "keluar", pos, jumlah);
