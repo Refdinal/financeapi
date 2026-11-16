@@ -182,8 +182,8 @@ const createTransaksi = async (p) => {
       const keluar = await insTrx({ grup_id: grup, arah: "keluar", asal: p.asal, tujuan: p.tujuan });
       const masuk = await insTrx({ grup_id: grup, arah: "masuk", asal: p.asal, tujuan: p.tujuan });
       created.push(keluar.rows[0], masuk.rows[0]);
-      // Realisasi dana darurat: pos dana_darurat berkurang saat masuk ke akun darurat.
-      if (ubahAlokasi && DARURAT.includes(p.tujuan)) {
+      // Pemindahan ke akun dana terpisah mengurangi pos dana ketenangan.
+      if (ubahAlokasi && [...DARURAT, ...WISHLIST].includes(p.tujuan)) {
         await cekSaldoPos(client, "dana_darurat", jumlah);
         await insAlokasi(keluar.rows[0].id, "keluar", "dana_darurat", jumlah);
       }
