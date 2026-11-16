@@ -5,6 +5,7 @@ require("dotenv").config();
 const routerTransaksi = require("./routes/transaksiRoutes");
 const routerAlokasi = require("./routes/alokasiRoutes");
 const routerYfinance = require("./routes/yfinanceRoutes");
+const routerWishlist = require("./routes/wishlistRoutes");
 const allowedOrigins = (process.env.CORS_ORIGIN || "")
   .split(",")
   .map((o) => o.trim())
@@ -30,6 +31,7 @@ app.get("/ping", (req, res) => {
 app.use("/transaksi", routerTransaksi);
 app.use("/alokasi", routerAlokasi);
 app.use("/yfinance", routerYfinance);
+app.use("/wishlist", routerWishlist);
 // listen port
 const port = process.env.PORT || 8080; // Gunakan 8080 jika cPanel mendukung
 app.listen(port, "0.0.0.0", () => {

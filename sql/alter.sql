@@ -12,3 +12,14 @@
 -- 2026-09-24: centang "ubah alokasi" per transaksi.
 -- true (default) = transaksi memengaruhi tabel alokasi; false = tidak.
 ALTER TABLE transaksi ADD COLUMN IF NOT EXISTS ubah_alokasi BOOLEAN DEFAULT TRUE;
+
+-- 2026-11-16: daftar target wishlist.
+CREATE TABLE IF NOT EXISTS wishlist (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nama TEXT NOT NULL,
+    target NUMERIC(14, 2) NOT NULL CHECK (target > 0),
+    catatan TEXT,
+    dibuat_pada TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_wishlist_dibuat_pada ON wishlist (dibuat_pada);
